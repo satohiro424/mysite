@@ -347,8 +347,20 @@
 
   async function fetchRates() {
     try {
-      const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/hkd.json');
-      const data = await res.json();
+      const today = new Date().toISOString().split('T')[0];
+      const urls = [
+        `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${today}/v1/currencies/hkd.json`,
+        'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/hkd.json'
+      ];
+      let data = null;
+      for (const url of urls) {
+        try {
+          const res = await fetch(url);
+          data = await res.json();
+          if (data && data.hkd) break;
+        } catch(e) { continue; }
+      }
+      if (!data || !data.hkd) throw new Error('no data');
       rates.JPY = data.hkd.jpy;
       rates.USD = data.hkd.usd;
       rates.CNY = data.hkd.cny;
