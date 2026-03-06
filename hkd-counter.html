@@ -347,23 +347,12 @@
 
   async function fetchRates() {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const urls = [
-        `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${today}/v1/currencies/hkd.json`,
-        'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/hkd.json'
-      ];
-      let data = null;
-      for (const url of urls) {
-        try {
-          const res = await fetch(url);
-          data = await res.json();
-          if (data && data.hkd) break;
-        } catch(e) { continue; }
-      }
-      if (!data || !data.hkd) throw new Error('no data');
-      rates.JPY = data.hkd.jpy;
-      rates.USD = data.hkd.usd;
-      rates.CNY = data.hkd.cny;
+      const res = await fetch('https://open.er-api.com/v6/latest/HKD');
+      const data = await res.json();
+      if (!data || data.result !== 'success') throw new Error('failed');
+      rates.JPY = data.rates.JPY;
+      rates.USD = data.rates.USD;
+      rates.CNY = data.rates.CNY;
       const d = new Date();
       document.getElementById('rate-info').textContent =
         `1 HKD = ¥${rates.JPY.toFixed(2)} / $${rates.USD.toFixed(4)} / ¥${rates.CNY.toFixed(4)}（${d.getMonth()+1}/${d.getDate()} )`;
