@@ -1,0 +1,17 @@
+{
+  "name": "出品文ジェネレーター",
+  "short_name": "出品文",
+  "description": "外貨コイン・紙幣の出品文を自動生成",
+  "start_url": "./listing-generator.html",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#c8a96e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

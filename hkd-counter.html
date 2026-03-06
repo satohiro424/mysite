@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HKD Counter">
+<meta name="theme-color" content="#c8a96e">
+<title>HKD Counter</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #c8a96e;
+    --text: #e8e0d0;
+    --dim: #7a7068;
+    --green: #4a9e6e;
+    --coin: #8a7a3a;
+    --note: #3a6a5a;
+    --rmb: #6a3a5a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', sans-serif; padding: 16px; min-height: 100vh; }
+
+  /* Total */
+  .total-card {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    position: sticky;
+    top: 16px;
+    z-index: 10;
+  }
+  .total-lbl { font-size: 10px; letter-spacing: 0.2em; color: var(--dim); text-transform: uppercase; margin-bottom: 4px; }
+  .total-val { font-size: 34px; font-weight: 700; color: var(--accent); letter-spacing: -1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; margin: 0 auto; }
+  .conv-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .conv-item { text-align: center; flex: 1; }
+  .conv-lbl { font-size: 9px; letter-spacing: 0.15em; color: var(--dim); text-transform: uppercase; margin-bottom: 3px; }
+  .conv-val { font-size: 15px; font-weight: 600; color: var(--text); }
+
+  /* Section */
+  .section-lbl {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin: 16px 0 8px;
+    padding-left: 4px;
+  }
+  .section-lbl.coin { color: var(--coin); }
+  .section-lbl.note { color: var(--note); }
+  .section-lbl.rmb { color: var(--rmb); }
+  .row.rmb { border-left: 3px solid var(--rmb); }
+
+  /* Row */
+  .row {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    gap: 12px;
+  }
+  .row.coin { border-left: 3px solid var(--coin); }
+  .row.note { border-left: 3px solid var(--note); }
+
+  .denom {
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 80px;
+    color: var(--text);
+  }
+  .denom sub {
+    font-size: 10px;
+    color: var(--dim);
+    font-weight: 400;
+    margin-left: 2px;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .btn {
+    background: var(--border);
+    border: none;
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .btn:active { background: #3a3a3a; }
+
+  .qty { -moz-appearance:textfield; }
+  .qty::-webkit-inner-spin-button, .qty::-webkit-outer-spin-button { -webkit-appearance:none; }
+  .qty {
+    font-size: 18px;
+    font-weight: 700;
+    width: 48px;
+    text-align: center;
+    color: var(--text);
+    background: none;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    padding: 0;
+  }
+
+  .subtotal {
+    font-size: 12px;
+    color: var(--dim);
+    min-width: 60px;
+    text-align: right;
+  }
+
+  .reset-btn {
+    width: 100%;
+    background: none;
+    border: 1px solid #3a2a2a;
+    border-radius: 8px;
+    color: #6a4040;
+    cursor: pointer;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    padding: 12px;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    margin-top: 16px;
+    font-family: inherit;
+  }
+  .reset-btn:hover { border-color: #8a3030; color: #cc4040; }
+</style>
+</head>
+<body>
+
+<div class="total-card">
+  <div class="conv-row">
+    <div class="conv-item"><div class="conv-lbl">JPY</div><div class="conv-val" id="c-jpy">¥0</div></div>
+    <div class="conv-item">
+      <div class="total-lbl">HKD</div>
+      <div class="total-val"><span id="total">0.00</span></div>
+    </div>
+    <div class="conv-item"><div class="conv-lbl">USD</div><div class="conv-val" id="c-usd">$0.00</div></div>
+  </div>
+  <div class="conv-row" style="margin-top:10px;justify-content:center;">
+    <div class="conv-item"><div class="conv-lbl">CNY</div><div class="conv-val" id="c-cny">¥0.00</div></div>
+  </div>
+  <div id="rate-info" style="font-size:9px;color:var(--dim);margin-top:8px;letter-spacing:0.05em;">Fetching rates...</div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px;"><div class="section-lbl coin" style="margin:0">硬貨 Coins</div><button onclick="resetSection("coin")" style="background:none;border:1px solid #3a2a2a;border-radius:6px;color:#6a4040;cursor:pointer;font-size:10px;letter-spacing:0.1em;padding:5px 10px;font-family:inherit;text-transform:uppercase;">Reset</button></div>
+
+<div class="row coin" data-val="0.1">
+  <div class="denom">10¢<sub>coin</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row coin" data-val="0.2">
+  <div class="denom">20¢<sub>coin</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row coin" data-val="0.5">
+  <div class="denom">50¢<sub>coin</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row coin" data-val="1">
+  <div class="denom">$1<sub>coin</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row coin" data-val="2">
+  <div class="denom">$2<sub>coin</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row coin" data-val="5">
+  <div class="denom">$5<sub>coin</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row coin" data-val="10">
+  <div class="denom">$10<sub>coin</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px;"><div class="section-lbl note" style="margin:0">紙幣 Banknotes</div><button onclick="resetSection("note")" style="background:none;border:1px solid #3a2a2a;border-radius:6px;color:#6a4040;cursor:pointer;font-size:10px;letter-spacing:0.1em;padding:5px 10px;font-family:inherit;text-transform:uppercase;">Reset</button></div>
+
+<div class="row note" data-val="10">
+  <div class="denom">$10<sub>note</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row note" data-val="20">
+  <div class="denom">$20<sub>note</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row note" data-val="50">
+  <div class="denom">$50<sub>note</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row note" data-val="100">
+  <div class="denom">$100<sub>note</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row note" data-val="500">
+  <div class="denom">$500<sub>note</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row note" data-val="1000">
+  <div class="denom">$1000<sub>note</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px;"><div class="section-lbl rmb" style="margin:0">RMB</div><button onclick="resetSection('rmb')" style="background:none;border:1px solid #3a2a2a;border-radius:6px;color:#6a4040;cursor:pointer;font-size:10px;letter-spacing:0.1em;padding:5px 10px;font-family:inherit;text-transform:uppercase;">Reset</button></div>
+
+<div class="row rmb" data-val="50">
+  <div class="denom">¥50<sub>note</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">HK$0.00</div>
+</div>
+
+<div class="row rmb" data-val="100">
+  <div class="denom">¥100<sub>note</sub></div>
+  <div class="controls">
+    <button class="btn" onclick="change(this,-1)">－</button>
+    <input type="number" class="qty" value="0" min="0" max="9999" oninput="if(this.value>9999)this.value=9999;if(this.value<0)this.value=0;recalcRow(this.closest('.row'));updateTotal();">
+    <button class="btn" onclick="change(this,1)">＋</button>
+  </div>
+  <div class="subtotal">CNY 0</div>
+</div>
+
+<button class="reset-btn" onclick="reset()">Reset All</button>
+
+<script>
+  function change(btn, delta) {
+    const row = btn.closest('.row');
+    const qtyEl = row.querySelector('.qty');
+    let qty = (parseInt(qtyEl.value) || 0) + delta;
+    if (qty < 0) qty = 0;
+    qtyEl.value = qty;
+    recalcRow(row);
+    updateTotal();
+  }
+
+  function recalcRow(row) {
+    const qty = parseInt(row.querySelector('.qty').value) || 0;
+    const val = parseFloat(row.dataset.val);
+    if (row.classList.contains('rmb')) {
+      row.querySelector('.subtotal').textContent = 'CNY ' + (val * qty).toFixed(0);
+    } else {
+      row.querySelector('.subtotal').textContent = 'HK$' + (val * qty).toFixed(2);
+    }
+  }
+
+  let rates = { JPY: null, USD: null, CNY: null };
+
+  async function fetchRates() {
+    try {
+      const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/hkd.json');
+      const data = await res.json();
+      rates.JPY = data.hkd.jpy;
+      rates.USD = data.hkd.usd;
+      rates.CNY = data.hkd.cny;
+      const d = new Date();
+      document.getElementById('rate-info').textContent =
+        `1 HKD = ¥${rates.JPY.toFixed(2)} / $${rates.USD.toFixed(4)} / ¥${rates.CNY.toFixed(4)}（${d.getMonth()+1}/${d.getDate()} )`;
+      updateTotal();
+    } catch(e) {
+      document.getElementById('rate-info').textContent = 'Failed to fetch rates';
+    }
+  }
+
+  function updateTotal() {
+    let total = 0;
+    document.querySelectorAll('.row:not(.rmb)').forEach(row => {
+      const qty = parseInt(row.querySelector('.qty').value) || 0;
+      const val = parseFloat(row.dataset.val);
+      total += val * qty;
+    });
+    document.getElementById('total').textContent = total.toFixed(2);
+    if (rates.JPY) {
+      document.getElementById('c-jpy').textContent = '¥' + Math.round(total * rates.JPY).toLocaleString();
+      document.getElementById('c-usd').textContent = '$' + (total * rates.USD).toFixed(2);
+      document.getElementById('c-cny').textContent = '¥' + (total * rates.CNY).toFixed(2);
+    }
+  }
+
+  function resetSection(cls) {
+    document.querySelectorAll('.row.' + cls).forEach(row => {
+      row.querySelector('.qty').value = 0;
+      row.querySelector('.subtotal').textContent = 'HK$0.00';
+    });
+    updateTotal();
+  }
+
+  function reset() {
+    document.querySelectorAll('.row').forEach(row => {
+      row.querySelector('.qty').value = 0;
+      row.querySelector('.subtotal').textContent = 'HK$0.00';
+    });
+    document.getElementById('total').textContent = '0.00';
+  }
+</script>
+</body>
+</html>
