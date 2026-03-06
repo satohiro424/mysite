@@ -228,6 +228,11 @@
   function saveRates() { save(); }
 
   function load() {
+    // ?reset=1 でlocalStorageクリア
+    if (location.search.includes('reset=1')) {
+      localStorage.removeItem(LS_KEY);
+      history.replaceState(null,'',location.pathname);
+    }
     try {
       const data = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
       document.querySelectorAll('.row').forEach(row => {
@@ -236,9 +241,11 @@
           recalcRow(row);
         }
       });
-      if (data['r-jpy']) document.getElementById('r-jpy').value = data['r-jpy'];
-      if (data['r-usd']) document.getElementById('r-usd').value = data['r-usd'];
-      if (data['r-cny']) document.getElementById('r-cny').value = data['r-cny'];
+      // レートは正の数値の時だけ上書き
+      ['r-jpy','r-usd','r-cny'].forEach(id => {
+        const v = parseFloat(data[id]);
+        if (v > 0) document.getElementById(id).value = v;
+      });
     } catch(e) {}
     updateTotal();
   }
