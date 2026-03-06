@@ -161,7 +161,21 @@
   <div class="conv-row" style="margin-top:10px;justify-content:center;">
     <div class="conv-item"><div class="conv-lbl">CNY</div><div class="conv-val" id="c-cny">¥0.00</div></div>
   </div>
-  <div id="rate-info" style="font-size:9px;color:var(--dim);margin-top:8px;letter-spacing:0.05em;">Fetching rates...</div>
+  <div id="rate-info" style="font-size:9px;color:var(--dim);margin-top:6px;letter-spacing:0.05em;">Fetching rates...</div>
+<div id="manual-rates" style="display:none;margin-top:10px;display:flex;gap:8px;">
+  <div style="flex:1;text-align:center;">
+    <div style="font-size:9px;color:var(--dim);margin-bottom:3px;">JPY/HKD</div>
+    <input type="number" id="r-jpy" placeholder="20.0" step="0.01" oninput="updateTotal()" style="width:100%;background:#111;border:1px solid #333;border-radius:4px;color:var(--text);font-size:13px;padding:5px;text-align:center;font-family:inherit;">
+  </div>
+  <div style="flex:1;text-align:center;">
+    <div style="font-size:9px;color:var(--dim);margin-bottom:3px;">USD/HKD</div>
+    <input type="number" id="r-usd" placeholder="0.128" step="0.001" oninput="updateTotal()" style="width:100%;background:#111;border:1px solid #333;border-radius:4px;color:var(--text);font-size:13px;padding:5px;text-align:center;font-family:inherit;">
+  </div>
+  <div style="flex:1;text-align:center;">
+    <div style="font-size:9px;color:var(--dim);margin-bottom:3px;">CNY/HKD</div>
+    <input type="number" id="r-cny" placeholder="0.93" step="0.001" oninput="updateTotal()" style="width:100%;background:#111;border:1px solid #333;border-radius:4px;color:var(--text);font-size:13px;padding:5px;text-align:center;font-family:inherit;">
+  </div>
+</div>
 </div>
 
 <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px;"><div class="section-lbl coin" style="margin:0">硬貨 Coins</div><button onclick="resetSection("coin")" style="background:none;border:1px solid #3a2a2a;border-radius:6px;color:#6a4040;cursor:pointer;font-size:10px;letter-spacing:0.1em;padding:5px 10px;font-family:inherit;text-transform:uppercase;">Reset</button></div>
@@ -370,11 +384,12 @@
       total += val * qty;
     });
     document.getElementById('total').textContent = total.toFixed(2);
-    if (rates.JPY) {
-      document.getElementById('c-jpy').textContent = '¥' + Math.round(total * rates.JPY).toLocaleString();
-      document.getElementById('c-usd').textContent = '$' + (total * rates.USD).toFixed(2);
-      document.getElementById('c-cny').textContent = '¥' + (total * rates.CNY).toFixed(2);
-    }
+    const jpy = rates.JPY || parseFloat(document.getElementById('r-jpy')?.value);
+    const usd = rates.USD || parseFloat(document.getElementById('r-usd')?.value);
+    const cny = rates.CNY || parseFloat(document.getElementById('r-cny')?.value);
+    if (jpy) document.getElementById('c-jpy').textContent = '¥' + Math.round(total * jpy).toLocaleString();
+    if (usd) document.getElementById('c-usd').textContent = '$' + (total * usd).toFixed(2);
+    if (cny) document.getElementById('c-cny').textContent = '¥' + (total * cny).toFixed(2);
   }
 
   function resetSection(cls) {
