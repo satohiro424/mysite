@@ -20,6 +20,7 @@
     --coin: #8a7a3a;
     --note: #3a6a5a;
     --rmb: #6a3a5a;
+    --thb: #3a4a6a;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', sans-serif; padding: 16px; min-height: 100vh; }
@@ -115,6 +116,17 @@
       <input class="rate-input" id="r-cny" type="number" value="0.930" step="0.001" oninput="saveRates();updateTotal();">
     </div>
   </div>
+  <div class="rate-row" style="padding-top:8px;margin-top:0;border-top:none;">
+    <div class="rate-item">
+      <div class="rate-lbl">RMB→HKD</div>
+      <input class="rate-input" id="r-rmb" type="number" value="1.141" step="0.001" oninput="saveRates();updateTotal();">
+    </div>
+    <div class="rate-item">
+      <div class="rate-lbl">THB→HKD</div>
+      <input class="rate-input" id="r-thb" type="number" value="0.218" step="0.001" oninput="saveRates();updateTotal();">
+    </div>
+    <div class="rate-item"></div>
+  </div>
 </div>
 
 <!-- COINS -->
@@ -150,6 +162,16 @@
 <div class="row rmb" data-val="50"  data-id="r50" ><div class="denom">¥50<sub>note</sub></div><div class="controls"><button class="btn" onclick="change(this,-1)">－</button><input type="number" class="qty" value="0" min="0" max="9999" oninput="clamp(this);recalcRow(this.closest('.row'));save();updateTotal();"><button class="btn" onclick="change(this,1)">＋</button></div><div class="subtotal">CNY 0</div></div>
 <div class="row rmb" data-val="100" data-id="r100"><div class="denom">¥100<sub>note</sub></div><div class="controls"><button class="btn" onclick="change(this,-1)">－</button><input type="number" class="qty" value="0" min="0" max="9999" oninput="clamp(this);recalcRow(this.closest('.row'));save();updateTotal();"><button class="btn" onclick="change(this,1)">＋</button></div><div class="subtotal">CNY 0</div></div>
 
+
+<!-- THB -->
+<div class="sec-hdr">
+  <div class="sec-lbl thb">THB</div>
+  <button class="sec-reset" onclick="resetSection('thb')">Reset</button>
+</div>
+<div class="row thb" data-val="100"  data-id="t100" ><div class="denom">฿100<sub>note</sub></div><div class="controls"><button class="btn" onclick="change(this,-1)">－</button><input type="number" class="qty" value="0" min="0" max="9999" oninput="clamp(this);recalcRow(this.closest('.row'));save();updateTotal();"><button class="btn" onclick="change(this,1)">＋</button></div><div class="subtotal">฿0</div></div>
+<div class="row thb" data-val="500"  data-id="t500" ><div class="denom">฿500<sub>note</sub></div><div class="controls"><button class="btn" onclick="change(this,-1)">－</button><input type="number" class="qty" value="0" min="0" max="9999" oninput="clamp(this);recalcRow(this.closest('.row'));save();updateTotal();"><button class="btn" onclick="change(this,1)">＋</button></div><div class="subtotal">฿0</div></div>
+<div class="row thb" data-val="1000" data-id="t1000"><div class="denom">฿1000<sub>note</sub></div><div class="controls"><button class="btn" onclick="change(this,-1)">－</button><input type="number" class="qty" value="0" min="0" max="9999" oninput="clamp(this);recalcRow(this.closest('.row'));save();updateTotal();"><button class="btn" onclick="change(this,1)">＋</button></div><div class="subtotal">฿0</div></div>
+
 <button class="reset-all" onclick="resetAll()">Reset All</button>
 
 <script>
@@ -178,7 +200,9 @@
     const qty = parseInt(row.querySelector('.qty').value) || 0;
     const val = parseFloat(row.dataset.val);
     if (row.classList.contains('rmb')) {
-      row.querySelector('.subtotal').textContent = 'CNY ' + (val * qty).toFixed(0);
+      row.querySelector('.subtotal').textContent = '¥' + (val * qty).toFixed(0);
+    } else if (row.classList.contains('thb')) {
+      row.querySelector('.subtotal').textContent = '฿' + (val * qty).toFixed(0);
     } else {
       row.querySelector('.subtotal').textContent = 'HK$' + (val * qty).toFixed(2);
     }
@@ -186,8 +210,18 @@
 
   function updateTotal() {
     let total = 0;
-    document.querySelectorAll('.row:not(.rmb)').forEach(row => {
-      total += (parseFloat(row.dataset.val) * (parseInt(row.querySelector('.qty').value) || 0));
+    const rmbRate = parseFloat(document.getElementById('r-rmb').value) || 0;
+    const thbRate = parseFloat(document.getElementById('r-thb').value) || 0;
+    document.querySelectorAll('.row').forEach(row => {
+      const qty = parseInt(row.querySelector('.qty').value) || 0;
+      const val = parseFloat(row.dataset.val);
+      if (row.classList.contains('rmb')) {
+        total += val * qty * rmbRate;
+      } else if (row.classList.contains('thb')) {
+        total += val * qty * thbRate;
+      } else {
+        total += val * qty;
+      }
     });
     document.getElementById('total').textContent = total.toFixed(2);
     const jpy = parseFloat(document.getElementById('r-jpy').value);
@@ -222,6 +256,8 @@
     data['r-jpy'] = document.getElementById('r-jpy').value;
     data['r-usd'] = document.getElementById('r-usd').value;
     data['r-cny'] = document.getElementById('r-cny').value;
+    data['r-rmb'] = document.getElementById('r-rmb').value;
+    data['r-thb'] = document.getElementById('r-thb').value;
     localStorage.setItem(LS_KEY, JSON.stringify(data));
   }
 
@@ -242,7 +278,7 @@
         }
       });
       // レートは正の数値の時だけ上書き
-      ['r-jpy','r-usd','r-cny'].forEach(id => {
+      ['r-jpy','r-usd','r-cny','r-rmb','r-thb'].forEach(id => {
         const v = parseFloat(data[id]);
         if (v > 0) document.getElementById(id).value = v;
       });
